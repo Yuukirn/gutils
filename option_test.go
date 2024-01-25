@@ -1,4 +1,4 @@
-package gop
+package gutils
 
 import (
 	"reflect"
@@ -18,13 +18,13 @@ func TestAnd(t *testing.T) {
 	tests := []testCase[int, string]{
 		{
 			name: "AndTest1",
-			args: args[int, string]{o: Some(2), optb: Nil[string]()},
-			want: Nil[string](),
+			args: args[int, string]{o: Some(2), optb: None[string]()},
+			want: None[string](),
 		},
 		{
 			name: "AndTest2",
-			args: args[int, string]{Nil[int](), Some[string]("foo")},
-			want: Nil[string](),
+			args: args[int, string]{None[int](), Some[string]("foo")},
+			want: None[string](),
 		},
 		{
 			name: "AndTest3",
@@ -34,8 +34,8 @@ func TestAnd(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := And(tt.args.o, tt.args.optb); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("And() = %v, want %v", got, tt.want)
+			if got := AndO(tt.args.o, tt.args.optb); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AndO() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -61,15 +61,15 @@ func TestAndThen(t *testing.T) {
 		},
 		{
 			name: "AndThenTest2",
-			args: args[int, string]{o: Nil[int](), f: func(t int) string {
+			args: args[int, string]{o: None[int](), f: func(t int) string {
 				return "foo"
 			}},
-			want: Nil[string](),
+			want: None[string](),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := AndThen(tt.args.o, tt.args.f); !reflect.DeepEqual(got, tt.want) {
+			if got := AndThenO(tt.args.o, tt.args.f); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("AndThen() = %v, want %v", got, tt.want)
 			}
 		})
@@ -96,16 +96,16 @@ func TestMap(t *testing.T) {
 		},
 		{
 			name: "MapTest2",
-			args: args[int, string]{o: Nil[int](), f: func(t int) string {
+			args: args[int, string]{o: None[int](), f: func(t int) string {
 				return "foo"
 			}},
-			want: Nil[string](),
+			want: None[string](),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Map(tt.args.o, tt.args.f); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Map() = %v, want %v", got, tt.want)
+			if got := MapO(tt.args.o, tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MapO() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -135,7 +135,7 @@ func TestMapOr(t *testing.T) {
 		{
 			name: "MapOrTest2",
 			args: args[int, string]{
-				Nil[int](), "ok", func(t int) string {
+				None[int](), "ok", func(t int) string {
 					return "foo"
 				},
 			},
@@ -144,8 +144,8 @@ func TestMapOr(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := MapOr(tt.args.o, tt.args.dv, tt.args.f); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MapOr() = %v, want %v", got, tt.want)
+			if got := MapOrO(tt.args.o, tt.args.dv, tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MapOrO() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -178,14 +178,14 @@ func TestMapOrElse(t *testing.T) {
 		},
 		{
 			name: "MapOrElseTest2",
-			args: args[int, string]{Nil[int](), df, f},
+			args: args[int, string]{None[int](), df, f},
 			want: "ok",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := MapOrElse(tt.args.o, tt.args.df, tt.args.f); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MapOrElse() = %v, want %v", got, tt.want)
+			if got := MapOrElseO(tt.args.o, tt.args.df, tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MapOrElseO() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -204,8 +204,8 @@ func TestNil(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotO := Nil[int](); !reflect.DeepEqual(gotO, tt.wantO) {
-				t.Errorf("Nil() = %v, want %v", gotO, tt.wantO)
+			if gotO := None[int](); !reflect.DeepEqual(gotO, tt.wantO) {
+				t.Errorf("None() = %v, want %v", gotO, tt.wantO)
 			}
 		})
 	}
@@ -232,17 +232,17 @@ func TestOption_And(t *testing.T) {
 		},
 		{
 			name: "Option_AndTest2",
-			o:    Nil[int](),
+			o:    None[int](),
 			args: args[int]{
 				Some(3),
 			},
-			want: Nil[int](),
+			want: None[int](),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.o.And(tt.args.optb); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("And() = %v, want %v", got, tt.want)
+				t.Errorf("AndO() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -270,9 +270,9 @@ func TestOption_AndThen(t *testing.T) {
 		},
 		{
 			name: "Option_AndThenTest2",
-			o:    Nil[int](),
+			o:    None[int](),
 			args: args[int]{f},
-			want: Nil[int](),
+			want: None[int](),
 		},
 	}
 	for _, tt := range tests {
@@ -300,7 +300,7 @@ func TestOption_Get(t *testing.T) {
 		},
 		{
 			name:  "Option_GetTest2",
-			o:     Nil[int](),
+			o:     None[int](),
 			want:  0,
 			want1: false,
 		},
@@ -396,8 +396,8 @@ func TestOption_Get(t *testing.T) {
 //	}
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.IsNil(); got != tt.want {
-//				t.Errorf("IsNil() = %v, want %v", got, tt.want)
+//			if got := tt.o.IsNone(); got != tt.want {
+//				t.Errorf("IsNone() = %v, want %v", got, tt.want)
 //			}
 //		})
 //	}
@@ -458,8 +458,8 @@ func TestOption_Get(t *testing.T) {
 //	}
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.Map(tt.args.f); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("Map() = %v, want %v", got, tt.want)
+//			if got := tt.o.MapO(tt.args.f); !reflect.DeepEqual(got, tt.want) {
+//				t.Errorf("MapO() = %v, want %v", got, tt.want)
 //			}
 //		})
 //	}
@@ -481,8 +481,8 @@ func TestOption_Get(t *testing.T) {
 //	}
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.MapOr(tt.args.dv, tt.args.f); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("MapOr() = %v, want %v", got, tt.want)
+//			if got := tt.o.MapOrO(tt.args.dv, tt.args.f); !reflect.DeepEqual(got, tt.want) {
+//				t.Errorf("MapOrO() = %v, want %v", got, tt.want)
 //			}
 //		})
 //	}
@@ -504,8 +504,8 @@ func TestOption_Get(t *testing.T) {
 //	}
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.MapOrElse(tt.args.df, tt.args.f); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("MapOrElse() = %v, want %v", got, tt.want)
+//			if got := tt.o.MapOrElseO(tt.args.df, tt.args.f); !reflect.DeepEqual(got, tt.want) {
+//				t.Errorf("MapOrElseO() = %v, want %v", got, tt.want)
 //			}
 //		})
 //	}

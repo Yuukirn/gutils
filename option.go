@@ -1,6 +1,9 @@
-package gop
+package gutils
 
-import "errors"
+import (
+	"errors"
+	"gutils/common"
+)
 
 // TODO: add ok_or...
 
@@ -10,101 +13,102 @@ type Option[T any] struct {
 }
 
 func (o *Option[T]) And(optb Option[T]) Option[T] {
-	if o.IsNil() {
-		return Nil[T]()
+	if o.IsNone() {
+		return None[T]()
 	}
 	return optb
 }
 
-func And[T, U any](o Option[T], optb Option[U]) Option[U] {
-	if o.IsNil() {
-		return Nil[U]()
+func AndO[T, U any](o Option[T], optb Option[U]) Option[U] {
+	if o.IsNone() {
+		return None[U]()
 	}
 	return optb
 }
 
 func (o *Option[T]) AndThen(f func(t T) T) Option[T] {
-	if o.IsNil() {
-		return Nil[T]()
+	if o.IsNone() {
+		return None[T]()
 	}
 	return Some(f(o.Some()))
 }
 
-func AndThen[T, U any](o Option[T], f func(t T) U) Option[U] {
-	if o.IsNil() {
-		return Nil[U]()
+// TODO: fix f type ?
+func AndThenO[T, U any](o Option[T], f func(t T) U) Option[U] {
+	if o.IsNone() {
+		return None[U]()
 	}
 	return Some(f(o.Some()))
 }
 
 func (o *Option[T]) Or(optb Option[T]) Option[T] {
-	if o.IsNil() {
+	if o.IsNone() {
 		return optb
 	}
 	return Some(o.Some())
 }
 
 func (o *Option[T]) OrElse(f func() T) Option[T] {
-	if o.IsNil() {
+	if o.IsNone() {
 		return Some(f())
 	}
 	return Some(o.Some())
 }
 
 func (o *Option[T]) Xor(optb Option[T]) Option[T] {
-	if o.IsNil() && optb.IsSome() {
+	if o.IsNone() && optb.IsSome() {
 		return Some(optb.Some())
 	}
-	if o.IsSome() && optb.IsNil() {
+	if o.IsSome() && optb.IsNone() {
 		return Some(o.Some())
 	}
-	return Nil[T]()
+	return None[T]()
 }
 
 func (o *Option[T]) Map(f func(t T) T) Option[T] {
-	if o.IsNil() {
-		return Nil[T]()
+	if o.IsNone() {
+		return None[T]()
 	}
 	return Some(f(o.Some()))
 }
 
-func Map[T, U any](o Option[T], f func(t T) U) Option[U] {
-	if o.IsNil() {
-		return Nil[U]()
+func MapO[T, U any](o Option[T], f func(t T) U) Option[U] {
+	if o.IsNone() {
+		return None[U]()
 	}
 	return Some(f(o.Some()))
 }
 
 func (o *Option[T]) MapOr(dv T, f func(t T) T) T {
-	if o.IsNil() {
+	if o.IsNone() {
 		return dv
 	}
 	return f(o.Some())
 }
 
-func MapOr[T, U any](o Option[T], dv U, f func(t T) U) U {
-	if o.IsNil() {
+func MapOrO[T, U any](o Option[T], dv U, f func(t T) U) U {
+	if o.IsNone() {
 		return dv
 	}
 	return f(o.Some())
 }
 
 func (o *Option[T]) MapOrElse(df func() T, f func(t T) T) T {
-	if o.IsNil() {
+	if o.IsNone() {
 		return df()
 	}
 	return f(o.Some())
 }
 
-func MapOrElse[T, U any](o Option[T], df func() U, f func(t T) U) U {
-	if o.IsNil() {
+func MapOrElseO[T, U any](o Option[T], df func() U, f func(t T) U) U {
+	if o.IsNone() {
 		return df()
 	}
 	return f(o.Some())
 }
 
 func (o *Option[T]) IsSome() bool {
-	return !o.IsNil()
+	return !o.IsNone()
 }
 
 func (o *Option[T]) IsSomeAnd(f func(t T) bool) bool {
@@ -114,7 +118,7 @@ func (o *Option[T]) IsSomeAnd(f func(t T) bool) bool {
 	return false
 }
 
-func (o *Option[T]) IsNil() bool {
+func (o *Option[T]) IsNone() bool {
 	return o.none == true
 }
 
@@ -123,22 +127,21 @@ func (o *Option[T]) Some() T {
 }
 
 func (o *Option[T]) Get() (T, bool) {
-	var zero T
-	if o.IsNil() {
-		return zero, false
+	if o.IsNone() {
+		return common.Zero[T](), false
 	}
 	return o.Some(), true
 }
 
 func (o *Option[T]) GetOrElse(dv T) T {
-	if o.IsNil() {
+	if o.IsNone() {
 		return dv
 	}
 	return o.Some()
 }
 
 func (o *Option[T]) GetOrInsert(dv T) T {
-	if o.IsNil() {
+	if o.IsNone() {
 		o.some = dv
 		o.none = false
 		return dv
@@ -147,7 +150,7 @@ func (o *Option[T]) GetOrInsert(dv T) T {
 }
 
 func (o *Option[T]) GetOrInsertWith(f func() T) T {
-	if o.IsNil() {
+	if o.IsNone() {
 		o.some = f()
 		o.none = false
 		return o.Some()
@@ -156,7 +159,7 @@ func (o *Option[T]) GetOrInsertWith(f func() T) T {
 }
 
 func (o *Option[T]) Unwrap() T {
-	if o.IsNil() {
+	if o.IsNone() {
 		panic(errors.New("none option"))
 
 	}
@@ -164,23 +167,22 @@ func (o *Option[T]) Unwrap() T {
 }
 
 func (o *Option[T]) UnwrapOr(dv T) T {
-	if o.IsNil() {
+	if o.IsNone() {
 		return dv
 	}
 	return o.Some()
 }
 
 func (o *Option[T]) UnwrapOrElse(f func() T) T {
-	if o.IsNil() {
+	if o.IsNone() {
 		return f()
 	}
 	return o.Some()
 }
 
 func (o *Option[T]) UnwrapOrDefault() T {
-	if o.IsNil() {
-		var zero T
-		return zero
+	if o.IsNone() {
+		return common.Zero[T]()
 	}
 	return o.Some()
 }
@@ -190,7 +192,7 @@ func Some[T any](t T) (o Option[T]) {
 	return
 }
 
-func Nil[T any]() (o Option[T]) {
+func None[T any]() (o Option[T]) {
 	o.none = true
 	return
 }

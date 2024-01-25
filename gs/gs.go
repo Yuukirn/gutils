@@ -2,6 +2,7 @@ package gs
 
 import (
 	"golang.org/x/exp/constraints"
+	"gutils/common"
 )
 
 func Filter[T any](s []T, f func(t T) bool) []T {
@@ -33,8 +34,7 @@ func Contains[T comparable](s []T, t T) bool {
 
 func Max[T constraints.Ordered](s []T) T {
 	if len(s) == 0 {
-		var zero T
-		return zero
+		return common.Zero[T]()
 	}
 	var m = s[0]
 	for i := 1; i < len(s); i++ {
@@ -47,8 +47,7 @@ func Max[T constraints.Ordered](s []T) T {
 
 func Min[T constraints.Ordered](s []T) T {
 	if len(s) == 0 {
-		var zero T
-		return zero
+		return common.Zero[T]()
 	}
 	var m = s[0]
 	for i := 1; i < len(s); i++ {
