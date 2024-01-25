@@ -2,6 +2,8 @@ package gutils
 
 import "gutils/common"
 
+// TODO: unmarshal and marshal json
+
 type Result[T any] struct {
 	ok  T
 	err error

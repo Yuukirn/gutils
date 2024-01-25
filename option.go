@@ -5,8 +5,6 @@ import (
 	"gutils/common"
 )
 
-// TODO: add ok_or...
-
 type Option[T any] struct {
 	some T
 	none bool
@@ -26,19 +24,18 @@ func AndO[T, U any](o Option[T], optb Option[U]) Option[U] {
 	return optb
 }
 
-func (o *Option[T]) AndThen(f func(t T) T) Option[T] {
+func (o *Option[T]) AndThen(f func(t T) Option[T]) Option[T] {
 	if o.IsNone() {
 		return None[T]()
 	}
-	return Some(f(o.Some()))
+	return f(o.Some())
 }
 
-// TODO: fix f type ?
-func AndThenO[T, U any](o Option[T], f func(t T) U) Option[U] {
+func AndThenO[T, U any](o Option[T], f func(t T) Option[U]) Option[U] {
 	if o.IsNone() {
 		return None[U]()
 	}
-	return Some(f(o.Some()))
+	return f(o.Some())
 }
 
 func (o *Option[T]) Or(optb Option[T]) Option[T] {
@@ -48,9 +45,9 @@ func (o *Option[T]) Or(optb Option[T]) Option[T] {
 	return Some(o.Some())
 }
 
-func (o *Option[T]) OrElse(f func() T) Option[T] {
+func (o *Option[T]) OrElse(f func() Option[T]) Option[T] {
 	if o.IsNone() {
-		return Some(f())
+		return f()
 	}
 	return Some(o.Some())
 }
@@ -107,6 +104,20 @@ func MapOrElseO[T, U any](o Option[T], df func() U, f func(t T) U) U {
 	return f(o.Some())
 }
 
+func (o *Option[T]) OkOr(err error) Result[T] {
+	if o.IsNone() {
+		return Err[T](err)
+	}
+	return Ok[T](o.Some())
+}
+
+func (o *Option[T]) OkOrElse(err func() error) Result[T] {
+	if o.IsNone() {
+		return Err[T](err())
+	}
+	return Ok[T](o.Some())
+}
+
 func (o *Option[T]) IsSome() bool {
 	return !o.IsNone()
 }
@@ -119,7 +130,7 @@ func (o *Option[T]) IsSomeAnd(f func(t T) bool) bool {
 }
 
 func (o *Option[T]) IsNone() bool {
-	return o.none == true
+	return o.none
 }
 
 func (o *Option[T]) Some() T {
@@ -160,8 +171,7 @@ func (o *Option[T]) GetOrInsertWith(f func() T) T {
 
 func (o *Option[T]) Unwrap() T {
 	if o.IsNone() {
-		panic(errors.New("none option"))
-
+		panic(errors.New("called `Option::Unwrap()` on a `None` value"))
 	}
 	return o.Some()
 }

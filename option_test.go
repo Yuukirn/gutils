@@ -1,6 +1,7 @@
 package gutils
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 )
@@ -41,36 +42,33 @@ func TestAnd(t *testing.T) {
 	}
 }
 
-func TestAndThen(t *testing.T) {
+func TestAndThenO(t *testing.T) {
 	type args[T any, U any] struct {
-		o Option[T]
-		f func(t T) U
-	}
-	type testCase[T any, U any] struct {
-		name string
-		args args[T, U]
+		o    Option[T]
+		f    func(t T) Option[U]
 		want Option[U]
 	}
-	tests := []testCase[int, string]{
+	tests := []struct {
+		name string
+		args args[int, string]
+	}{
 		{
 			name: "AndThenTest1",
-			args: args[int, string]{o: Some(2), f: func(t int) string {
-				return "foo"
-			}},
-			want: Some("foo"),
+			args: args[int, string]{o: Some(2), f: func(t int) Option[string] {
+				return Some("foo")
+			}, want: Some("foo")},
 		},
 		{
 			name: "AndThenTest2",
-			args: args[int, string]{o: None[int](), f: func(t int) string {
-				return "foo"
-			}},
-			want: None[string](),
+			args: args[int, string]{o: None[int](), f: func(t int) Option[string] {
+				return Some("foo")
+			}, want: None[string]()},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := AndThenO(tt.args.o, tt.args.f); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("AndThen() = %v, want %v", got, tt.want)
+			if got := AndThenO(tt.args.o, tt.args.f); !reflect.DeepEqual(got, tt.args.want) {
+				t.Errorf("AndThenO() = %v, want %v", got, tt.args.want)
 			}
 		})
 	}
@@ -249,11 +247,8 @@ func TestOption_And(t *testing.T) {
 }
 
 func TestOption_AndThen(t *testing.T) {
-	f := func(t int) int {
-		return 2 * t
-	}
 	type args[T any] struct {
-		f func(t T) T
+		f func(t T) Option[T]
 	}
 	type testCase[T any] struct {
 		name string
@@ -265,13 +260,17 @@ func TestOption_AndThen(t *testing.T) {
 		{
 			name: "Option_AndThenTest1",
 			o:    Some(2),
-			args: args[int]{f},
-			want: Some(4),
+			args: args[int]{func(t int) Option[int] {
+				return Some(3)
+			}},
+			want: Some(3),
 		},
 		{
 			name: "Option_AndThenTest2",
 			o:    None[int](),
-			args: args[int]{f},
+			args: args[int]{func(t int) Option[int] {
+				return Some(3)
+			}},
 			want: None[int](),
 		},
 	}
@@ -318,380 +317,694 @@ func TestOption_Get(t *testing.T) {
 	}
 }
 
-//
-//func TestOption_GetOrElse(t *testing.T) {
-//	type args[T any] struct {
-//		dv T
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want T
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.GetOrElse(tt.args.dv); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("GetOrElse() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_GetOrInsert(t *testing.T) {
-//	type args[T any] struct {
-//		dv T
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want T
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.GetOrInsert(tt.args.dv); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("GetOrInsert() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_GetOrInsertWith(t *testing.T) {
-//	type args[T any] struct {
-//		f func() T
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want T
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.GetOrInsertWith(tt.args.f); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("GetOrInsertWith() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_IsNil(t *testing.T) {
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		want bool
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.IsNone(); got != tt.want {
-//				t.Errorf("IsNone() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_IsSome(t *testing.T) {
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		want bool
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.IsSome(); got != tt.want {
-//				t.Errorf("IsSome() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_IsSomeAnd(t *testing.T) {
-//	type args[T any] struct {
-//		f func(t T) bool
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want bool
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.IsSomeAnd(tt.args.f); got != tt.want {
-//				t.Errorf("IsSomeAnd() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_Map(t *testing.T) {
-//	type args[T any] struct {
-//		f func(t T) T
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want Option
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.MapO(tt.args.f); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("MapO() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_MapOr(t *testing.T) {
-//	type args[T any] struct {
-//		dv T
-//		f  func(t T) T
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want T
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.MapOrO(tt.args.dv, tt.args.f); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("MapOrO() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_MapOrElse(t *testing.T) {
-//	type args[T any] struct {
-//		df func() T
-//		f  func(t T) T
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want T
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.MapOrElseO(tt.args.df, tt.args.f); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("MapOrElseO() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_Or(t *testing.T) {
-//	type args[T any] struct {
-//		optb Option
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want Option
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.Or(tt.args.optb); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("Or() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_OrElse(t *testing.T) {
-//	type args[T any] struct {
-//		f func() T
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want Option
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.OrElse(tt.args.f); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("OrElse() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_Some(t *testing.T) {
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		want T
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.Some(); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("Some() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_Unwrap(t *testing.T) {
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		want T
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.Unwrap(); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("Unwrap() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_UnwrapOr(t *testing.T) {
-//	type args[T any] struct {
-//		dv T
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want T
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.UnwrapOr(tt.args.dv); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("UnwrapOr() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_UnwrapOrDefault(t *testing.T) {
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		want T
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.UnwrapOrDefault(); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("UnwrapOrDefault() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_UnwrapOrElse(t *testing.T) {
-//	type args[T any] struct {
-//		f func() T
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want T
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.UnwrapOrElse(tt.args.f); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("UnwrapOrElse() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestOption_Xor(t *testing.T) {
-//	type args[T any] struct {
-//		optb Option
-//	}
-//	type testCase[T any] struct {
-//		name string
-//		o    Option[T]
-//		args args[T]
-//		want Option
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.o.Xor(tt.args.optb); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("Xor() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestSome(t *testing.T) {
-//	type args[T any] struct {
-//		t T
-//	}
-//	type testCase[T any] struct {
-//		name  string
-//		args  args[T]
-//		wantO Option
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if gotO := Some(tt.args.t); !reflect.DeepEqual(gotO, tt.wantO) {
-//				t.Errorf("Some() = %v, want %v", gotO, tt.wantO)
-//			}
-//		})
-//	}
-//}
+func TestOption_GetOrElse(t *testing.T) {
+	type args[T any] struct {
+		dv T
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_GetOrElseTest1",
+			o:    Some(2),
+			args: args[int]{3},
+			want: 2,
+		},
+		{
+			name: "Option_GetOrElseTest2",
+			o:    None[int](),
+			args: args[int]{3},
+			want: 3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.GetOrElse(tt.args.dv); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetOrElse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_GetOrInsert(t *testing.T) {
+	type args[T any] struct {
+		dv T
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_GetOrInsertTest1",
+			o:    Some(2),
+			args: args[int]{3},
+			want: 2,
+		},
+		{
+			name: "Option_GetOrInsertTest2",
+			o:    None[int](),
+			args: args[int]{3},
+			want: 3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.GetOrInsert(tt.args.dv); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetOrInsert() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_GetOrInsertWith(t *testing.T) {
+	type args[T any] struct {
+		f func() T
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_GetOrInsertWithTest1",
+			o:    Some(2),
+			args: args[int]{func() int {
+				return 3
+			}},
+			want: 2,
+		},
+		{
+			name: "Option_GetOrInsertWithTest2",
+			o:    None[int](),
+			args: args[int]{func() int {
+				return 3
+			}},
+			want: 3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.GetOrInsertWith(tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetOrInsertWith() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_IsNone(t *testing.T) {
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		want bool
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_IsNilTest1",
+			o:    Some(2),
+			want: false,
+		},
+		{
+			name: "Option_IsNilTest2",
+			o:    None[int](),
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.IsNone(); got != tt.want {
+				t.Errorf("IsNone() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_IsSome(t *testing.T) {
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		want bool
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_IsSomeTest1",
+			o:    Some(2),
+			want: true,
+		},
+		{
+			name: "Option_IsSomeTest2",
+			o:    None[int](),
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.IsSome(); got != tt.want {
+				t.Errorf("IsSome() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_IsSomeAnd(t *testing.T) {
+	type args[T any] struct {
+		f func(t T) bool
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want bool
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_IsSomeAndTest1",
+			o:    Some(2),
+			args: args[int]{func(t int) bool {
+				return t == 2
+			}},
+			want: true,
+		},
+		{
+			name: "Option_IsSomeAndTest2",
+			o:    None[int](),
+			args: args[int]{func(t int) bool {
+				return t == 2
+			}},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.IsSomeAnd(tt.args.f); got != tt.want {
+				t.Errorf("IsSomeAnd() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_Map(t *testing.T) {
+	type args[T any] struct {
+		f func(t T) T
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want Option[T]
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_MapTest1",
+			o:    Some(2),
+			args: args[int]{func(t int) int {
+				return 2 * t
+			}},
+			want: Some(4),
+		},
+		{
+			name: "Option_MapTest2",
+			o:    None[int](),
+			args: args[int]{func(t int) int {
+				return 2 * t
+			}},
+			want: None[int](),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.Map(tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MapO() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_MapOr(t *testing.T) {
+	type args[T any] struct {
+		dv T
+		f  func(t T) T
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_MapOrTest1",
+			o:    Some(2),
+			args: args[int]{
+				dv: 3,
+				f: func(t int) int {
+					return 2 * t
+				},
+			},
+			want: 4,
+		},
+		{
+			name: "Option_MapOrTest2",
+			o:    None[int](),
+			args: args[int]{
+				dv: 3,
+				f: func(t int) int {
+					return 2 * t
+				},
+			},
+			want: 3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.MapOr(tt.args.dv, tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MapOr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_MapOrElse(t *testing.T) {
+	type args[T any] struct {
+		df func() T
+		f  func(t T) T
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_MapOrElseTest1",
+			o:    Some(2),
+			args: args[int]{
+				df: func() int {
+					return 3
+				},
+				f: func(t int) int {
+					return 2 * t
+				},
+			},
+			want: 4,
+		},
+		{
+			name: "Option_MapOrElseTest2",
+			o:    None[int](),
+			args: args[int]{
+				df: func() int {
+					return 3
+				},
+				f: func(t int) int {
+					return 2 * t
+				},
+			},
+			want: 3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.MapOrElse(tt.args.df, tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MapOrElse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_Or(t *testing.T) {
+	type args[T any] struct {
+		optb Option[T]
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want Option[T]
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_OrTest1",
+			o:    Some(2),
+			args: args[int]{
+				optb: Some(3),
+			},
+			want: Some(2),
+		},
+		{
+			name: "Option_OrTest2",
+			o:    None[int](),
+			args: args[int]{
+				optb: Some(3),
+			},
+			want: Some(3),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.Or(tt.args.optb); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Or() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_OrElse(t *testing.T) {
+	type args[T any] struct {
+		f func() Option[T]
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want Option[T]
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_OrElseTest1",
+			o:    Some(2),
+			args: args[int]{
+				f: func() Option[int] {
+					return Some(3)
+				},
+			},
+			want: Some(2),
+		},
+		{
+			name: "Option_OrElseTest2",
+			o:    None[int](),
+			args: args[int]{
+				f: func() Option[int] {
+					return Some(3)
+				},
+			},
+			want: Some(3),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.OrElse(tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("OrElse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_Some(t *testing.T) {
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_SomeTest1",
+			o:    Some(2),
+			want: 2,
+		},
+		{
+			name: "Option_SomeTest2",
+			o:    None[int](),
+			want: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.Some(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Some() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_Unwrap(t *testing.T) {
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_UnwrapTest1",
+			o:    Some(2),
+			want: 2,
+		},
+		// {
+		// 	name: "Option_UnwrapTest2",
+		// 	o:    None[int](),
+		// 	want: 0,
+		// },
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.Unwrap(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Unwrap() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_UnwrapOr(t *testing.T) {
+	type args[T any] struct {
+		dv T
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_UnwrapOrTest1",
+			o:    Some(2),
+			args: args[int]{3},
+			want: 2,
+		},
+		{
+			name: "Option_UnwrapOrTest2",
+			o:    None[int](),
+			args: args[int]{3},
+			want: 3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.UnwrapOr(tt.args.dv); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("UnwrapOr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_UnwrapOrElse(t *testing.T) {
+	type args[T any] struct {
+		f func() T
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_UnwrapOrElseTest1",
+			o:    Some(2),
+			args: args[int]{func() int {
+				return 3
+			}},
+			want: 2,
+		},
+		{
+			name: "Option_UnwrapOrElseTest2",
+			o:    None[int](),
+			args: args[int]{func() int {
+				return 3
+			}},
+			want: 3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.UnwrapOrElse(tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("UnwrapOrElse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_UnwrapOrDefault(t *testing.T) {
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_UnwrapOrDefaultTest1",
+			o:    Some(2),
+			want: 2,
+		},
+		{
+			name: "Option_UnwrapOrDefaultTest2",
+			o:    None[int](),
+			want: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.UnwrapOrDefault(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("UnwrapOrDefault() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_Xor(t *testing.T) {
+	type args[T any] struct {
+		optb Option[T]
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want Option[T]
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_XorTest1",
+			o:    Some(2),
+			args: args[int]{Some(3)},
+			want: None[int](),
+		},
+		{
+			name: "Option_XorTest2",
+			o:    None[int](),
+			args: args[int]{Some(3)},
+			want: Some(3),
+		},
+		{
+			name: "Option_XorTest3",
+			o:    Some(2),
+			args: args[int]{None[int]()},
+			want: Some(2),
+		},
+		{
+			name: "Option_XorTest4",
+			o:    None[int](),
+			args: args[int]{None[int]()},
+			want: None[int](),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.Xor(tt.args.optb); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Xor() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSome(t *testing.T) {
+	type args[T any] struct {
+		t T
+	}
+	type testCase[T any] struct {
+		name  string
+		args  args[T]
+		wantO Option[T]
+	}
+	tests := []testCase[int]{
+		{
+			name:  "SomeTest1",
+			args:  args[int]{t: 2},
+			wantO: Option[int]{some: 2},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotO := Some(tt.args.t); !reflect.DeepEqual(gotO, tt.wantO) {
+				t.Errorf("Some() = %v, want %v", gotO, tt.wantO)
+			}
+		})
+	}
+}
+
+func TestOption_OkOr(t *testing.T) {
+	type args[T any] struct {
+		err error
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want Result[T]
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_OkOrTest1",
+			o:    Some(2),
+			args: args[int]{errors.New("foo")},
+			want: Ok[int](2),
+		},
+		{
+			name: "Option_OkOrTest2",
+			o:    None[int](),
+			args: args[int]{errors.New("foo")},
+			want: Err[int](errors.New("foo")),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.OkOr(tt.args.err); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("OkOr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_OkOrElse(t *testing.T) {
+	type args[T any] struct {
+		err func() error
+	}
+	type testCase[T any] struct {
+		name string
+		o    Option[T]
+		args args[T]
+		want Result[T]
+	}
+	tests := []testCase[int]{
+		{
+			name: "Option_OkOrElseTest1",
+			o:    Some(2),
+			args: args[int]{func() error {
+				return errors.New("foo")
+			}},
+			want: Ok[int](2),
+		},
+		{
+			name: "Option_OkOrElseTest2",
+			o:    None[int](),
+			args: args[int]{func() error {
+				return errors.New("foo")
+			}},
+			want: Err[int](errors.New("foo")),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.o.OkOrElse(tt.args.err); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("OkOrElse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
