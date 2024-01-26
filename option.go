@@ -1,6 +1,7 @@
 package gutils
 
 import (
+	"encoding/json"
 	"errors"
 	"gutils/common"
 )
@@ -195,6 +196,28 @@ func (o *Option[T]) UnwrapOrDefault() T {
 		return common.Zero[T]()
 	}
 	return o.Some()
+}
+
+func (o *Option[T]) MarshalJSON() ([]byte, error) {
+	if o.IsNone() {
+		return []byte("null"), nil
+	}
+	return json.Marshal(o.Some())
+}
+
+func (o *Option[T]) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		o.none = true
+		return nil
+	}
+
+	err := json.Unmarshal(data, &o.some)
+	if err != nil {
+		return err
+	}
+
+	o.none = false
+	return nil
 }
 
 func Some[T any](t T) (o Option[T]) {

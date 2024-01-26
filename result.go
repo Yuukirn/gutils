@@ -1,8 +1,8 @@
 package gutils
 
-import "gutils/common"
-
-// TODO: unmarshal and marshal json
+import (
+	"gutils/common"
+)
 
 type Result[T any] struct {
 	ok  T

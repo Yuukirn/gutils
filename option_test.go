@@ -1008,3 +1008,82 @@ func TestOption_OkOrElse(t *testing.T) {
 		})
 	}
 }
+
+func TestOption_MarshalJSON(t *testing.T) {
+	type testCase[T any] struct {
+		name    string
+		o       Option[T]
+		want    []byte
+		wantErr bool
+	}
+	tests := []testCase[int]{
+		{
+			name:    "Option_MarshalJSONTest1",
+			o:       Some(3),
+			want:    []byte("3"),
+			wantErr: false,
+		},
+		{
+			name:    "Option_MarshalJSONTest2",
+			o:       None[int](),
+			want:    []byte("null"),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.o.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MarshalJSON() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOption_UnmarshalJSON(t *testing.T) {
+	type args struct {
+		data []byte
+	}
+	type testCase[T any] struct {
+		name     string
+		o        Option[T]
+		args     args
+		wantSome T
+		wantNone bool
+		wantErr  bool
+	}
+	tests := []testCase[int]{
+		{
+			name:     "Option_UnmarshalJSONTest1",
+			o:        None[int](),
+			args:     args{[]byte("null")},
+			wantNone: true,
+			wantErr:  false,
+		},
+		{
+			name:     "Option_UnmarshalJSONTest2",
+			o:        None[int](),
+			args:     args{[]byte("3")},
+			wantSome: 3,
+			wantNone: false,
+			wantErr:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.o.UnmarshalJSON(tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.o.none != tt.wantNone {
+				t.Errorf("UnmarshalJSON() none = %v, wantNone %v", tt.o.none, tt.wantNone)
+			}
+			if !tt.wantNone && !reflect.DeepEqual(tt.o.Some(), tt.wantSome) {
+				t.Errorf("UnmarshalJSON() got = %v, wantSome %v", tt.o.Some(), tt.wantSome)
+			}
+		})
+	}
+}
