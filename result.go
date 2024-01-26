@@ -1,9 +1,5 @@
 package gutils
 
-import (
-	"gutils/common"
-)
-
 type Result[T any] struct {
 	ok  T
 	err error
@@ -152,7 +148,7 @@ func (r *Result[T]) UnwrapOrElse(f func(err error) T) T {
 
 func (r *Result[T]) UnwrapOrDefault() T {
 	if r.IsErr() {
-		return common.Zero[T]()
+		return Zero[T]()
 	}
 	return r.ok
 }

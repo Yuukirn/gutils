@@ -3,7 +3,6 @@ package gutils
 import (
 	"encoding/json"
 	"errors"
-	"gutils/common"
 )
 
 type Option[T any] struct {
@@ -140,7 +139,7 @@ func (o Option[T]) Some() T {
 
 func (o Option[T]) Get() (T, bool) {
 	if o.IsNone() {
-		return common.Zero[T](), false
+		return Zero[T](), false
 	}
 	return o.Some(), true
 }
@@ -193,7 +192,7 @@ func (o Option[T]) UnwrapOrElse(f func() T) T {
 
 func (o Option[T]) UnwrapOrDefault() T {
 	if o.IsNone() {
-		return common.Zero[T]()
+		return Zero[T]()
 	}
 	return o.Some()
 }
