@@ -57,3 +57,43 @@ func Min[T constraints.Ordered](s []T) T {
 	}
 	return m
 }
+
+func Sum[T constraints.Integer | constraints.Float](s []T) T {
+	var res T
+	for i := range s {
+		res += s[i]
+	}
+	return res
+}
+
+func SumWith[T constraints.Integer | constraints.Float](s []T, dv T) T {
+	var res = dv
+	for i := range s {
+		res += s[i]
+	}
+	return res
+}
+
+func Reverse[T any](s []T) []T {
+	var res = make([]T, len(s))
+	for i := range s {
+		res[len(s)-1-i] = s[i]
+	}
+	return res
+}
+
+func Fold[T any](s []T, f func(T, T) T) T {
+	var res T
+	for i := range s {
+		res = f(res, s[i])
+	}
+	return res
+}
+
+func FoldWith[T any](s []T, dv T, f func(T, T) T) T {
+	var res = dv
+	for i := range s {
+		res = f(res, s[i])
+	}
+	return res
+}

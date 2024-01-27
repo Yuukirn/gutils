@@ -252,3 +252,34 @@ func TestValues(t *testing.T) {
 		})
 	}
 }
+
+func TestContainsKey(t *testing.T) {
+	type args[K comparable, V any] struct {
+		m map[K]V
+		k K
+	}
+	type testCase[K comparable, V any] struct {
+		name string
+		args args[K, V]
+		want bool
+	}
+	tests := []testCase[string, int]{
+		{
+			name: "ContainsKeyTest1",
+			args: args[string, int]{m: map[string]int{"a": 1, "b": 2, "c": 3}, k: "a"},
+			want: true,
+		},
+		{
+			name: "ContainsKeyTest2",
+			args: args[string, int]{m: map[string]int{"a": 1, "b": 2, "c": 3}, k: "d"},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ContainsKey(tt.args.m, tt.args.k); got != tt.want {
+				t.Errorf("ContainsKey() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -28,6 +28,11 @@ func Filter[K comparable, V any](m map[K]V, f func(k K) bool) map[K]V {
 	return res
 }
 
+func ContainsKey[K comparable, V any](m map[K]V, k K) bool {
+	_, exist := m[k]
+	return exist
+}
+
 func Get[K comparable, V any](m map[K]V, k K) gutils.Option[V] {
 	if m == nil || len(m) == 0 {
 		return gutils.None[V]()

@@ -144,3 +144,133 @@ func TestMin(t *testing.T) {
 		})
 	}
 }
+
+func TestReverse(t *testing.T) {
+	type args[T any] struct {
+		s []T
+	}
+	type testCase[T any] struct {
+		name string
+		args args[T]
+		want []T
+	}
+	tests := []testCase[int]{
+		{
+			name: "ReverseTest1",
+			args: args[int]{[]int{1, 2, 3}},
+			want: []int{3, 2, 1},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Reverse(tt.args.s); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Reverse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSum(t *testing.T) {
+	type args[T constraints.Integer | constraints.Float] struct {
+		s []T
+	}
+	type testCase[T constraints.Integer | constraints.Float] struct {
+		name string
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "SumTest1",
+			args: args[int]{[]int{1, 2, 3}},
+			want: 6,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Sum(tt.args.s); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Sum() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSumWith(t *testing.T) {
+	type args[T constraints.Integer | constraints.Float] struct {
+		s  []T
+		dv T
+	}
+	type testCase[T constraints.Integer | constraints.Float] struct {
+		name string
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "SumWithTest1",
+			args: args[int]{[]int{1, 2, 3}, 10},
+			want: 16,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SumWith(tt.args.s, tt.args.dv); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SumWith() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFold(t *testing.T) {
+	type args[T any] struct {
+		s []T
+		f func(T, T) T
+	}
+	type testCase[T any] struct {
+		name string
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "FoldTest1",
+			args: args[int]{[]int{1, 2, 3}, func(a, b int) int { return a + b }},
+			want: 6,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Fold(tt.args.s, tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Fold() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+
+}
+
+func TestFoldWith(t *testing.T) {
+	type args[T any] struct {
+		s  []T
+		dv T
+		f  func(T, T) T
+	}
+	type testCase[T any] struct {
+		name string
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "FoldWithTest1",
+			args: args[int]{[]int{1, 2, 3}, 10, func(a, b int) int { return a + b }},
+			want: 16,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FoldWith(tt.args.s, tt.args.dv, tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FoldWith() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
