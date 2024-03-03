@@ -1,8 +1,8 @@
 package stream
 
 import (
-	"gutils"
-	"gutils/gs"
+	"github.com/Yuukirn/gutils"
+	"github.com/Yuukirn/gutils/gs"
 )
 
 type SliceStream[T any] struct {

@@ -1,8 +1,8 @@
 package gs
 
 import (
+	"github.com/Yuukirn/gutils"
 	"golang.org/x/exp/constraints"
-	"gutils"
 )
 
 func Filter[T any](s []T, f func(t T) bool) []T {

@@ -1,8 +1,8 @@
 package stream
 
 import (
-	"gutils"
-	"gutils/gm"
+	"github.com/Yuukirn/gutils"
+	"github.com/Yuukirn/gutils/gm"
 	"maps"
 )
 

@@ -1,6 +1,6 @@
 package gm
 
-import "gutils"
+import "github.com/Yuukirn/gutils"
 
 func Keys[K comparable, V any](m map[K]V) []K {
 	var keys = make([]K, 0, len(m))
